@@ -6,6 +6,10 @@
 	<h2>Credentials</h2>
 	<pre><%= @user.to_json %></pre>
 	<hr>
+	<h2>CURL</h2>
+	<pre>curl -XGET -v -H 'Accept: application/json' -H 'X-Auth-Client: <%= @client_id %>' -H 'X-Auth-Token: <%= @user.access_token %>' <%= @bc_api_url + "/stores/#{@user.store_hash}/v2/products" %>
+	</pre>
+	<hr>
 	<h2>Products</h2>
 	<pre><%= @products %></pre>
 </body>

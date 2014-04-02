@@ -36,7 +36,7 @@ DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite3://#{Dir.pwd}/dev.db")
 class User
 
   include DataMapper::Resource
-  
+
   property :id,             Serial
   property :email,          String, :required => true
   property :access_token,   String, :required => true
@@ -79,6 +79,7 @@ get '/' do
     return erb :error
   end
 
+  @bc_api_url = bc_api_url
   @client_id = bc_client_id
   @products = JSON.pretty_generate(@user.bc_api.get_products)
 
@@ -170,7 +171,7 @@ end
 
 # Time consistent string comparison.
 # Most library implementation will fail fast allowing timing attacks.
-# 
+#
 #
 def secure_compare(a, b)
   return false if a.blank? || b.blank? || a.bytesize != b.bytesize
