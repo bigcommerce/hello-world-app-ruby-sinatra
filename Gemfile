@@ -6,7 +6,7 @@ gem 'thin'
 gem 'rest-client'
 gem 'dotenv'
 gem 'bigcommerce',
-    :git => 'git://github.com/mechatama/bigcommerce-api-ruby.git',
+    :github => 'mechatama/bigcommerce-api-ruby',
     :branch => 'oauth'
 gem 'datamapper'
 

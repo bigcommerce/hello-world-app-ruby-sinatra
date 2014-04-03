@@ -46,8 +46,7 @@ class User
   validates_uniqueness_of :store_hash, :email
 
   def bc_api
-    config = {:api_endpoint => bc_api_url,
-              :store_hash => self.store_hash,
+    config = {:store_hash => self.store_hash,
               :client_id => bc_client_id,
               :access_token => self.access_token
              }
@@ -56,7 +55,7 @@ class User
 
   def self.validate(user)
     api = user.bc_api
-    time = api.get_time
+    time = api.time
   if time.nil?
     return false
   elsif time.key?("time")
@@ -81,7 +80,7 @@ get '/' do
 
   @bc_api_url = bc_api_url
   @client_id = bc_client_id
-  @products = JSON.pretty_generate(@user.bc_api.get_products)
+  @products = JSON.pretty_generate(@user.bc_api.products)
 
   erb :index
 end
@@ -197,7 +196,7 @@ end
 # Get the API url from env
 #
 def bc_api_url
-  ENV['BC_API_URL']
+  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerceapp.com'
 end
 
 
