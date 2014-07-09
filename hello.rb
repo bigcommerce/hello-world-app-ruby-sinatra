@@ -8,70 +8,60 @@ require 'openssl'
 require 'bigcommerce'
 require 'logger'
 
-configure do
+class AuthorizationError < StandardError
+end
 
+configure do
   set :run, true
   set :environment, :development
 
   # Actually need to disable frame protection because our app
   # lives inside an iframe.
-  #
-  set :protection, :except => [:http_origin, :frame_options]
-  enable :sessions
+  set :protection, except: [:http_origin, :frame_options]
 
-  use Rack::Session::Cookie
+  use Rack::Session::Cookie, secret: ENV['SESSION_SECRET']
   use Rack::Logger
 
   use OmniAuth::Builder do
-    provider :bigcommerce, bc_client_id, bc_client_secret, scope: 'store_v2'
-    OmniAuth.config.full_host = ENV['APP_URL'] || nil
+    provider :bigcommerce, bc_client_id, bc_client_secret, scope: scopes
+    OmniAuth.config.full_host = app_url || nil
   end
-
 end
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite3://#{Dir.pwd}/dev.db")
 
 # User model representation
-#
 class User
-
   include DataMapper::Resource
 
-  property :id,             Serial
-  property :email,          String, :required => true
-  property :access_token,   String, :required => true
-  property :store_hash,     String, :required => true
+  property :id,           Serial
+  property :email,        String, required: true
+  property :access_token, String, required: true
+  property :store_hash,   String, required: true
 
   validates_presence_of :email, :access_token, :store_hash
   validates_uniqueness_of :store_hash, :email
 
   def bc_api
-    config = {:store_hash => self.store_hash,
-              :client_id => bc_client_id,
-              :access_token => self.access_token
-             }
+    config = {
+      store_hash: self.store_hash,
+      client_id: bc_client_id,
+      access_token: self.access_token
+    }
     Bigcommerce::Api.new(config)
   end
 
   def self.validate(user)
     api = user.bc_api
     time = api.time
-  if time.nil?
-    return false
-  elsif time.key?("time")
-    return true
+    time && time.key?("time")
   end
-  false
-  end
-
 end
 
 DataMapper.finalize.auto_upgrade!
 
-# Index
-#
+# Home Page
 get '/' do
-
   @user = current_user
   unless @user
     @error = 'Unauthorized user'
@@ -85,93 +75,133 @@ get '/' do
   erb :index
 end
 
-# Load endpoint
-#
-get '/load' do
-  signed_payload = params[:signed_payload]
-
-  unless verify(signed_payload, bc_client_secret)
-    @error = 'Invalid signature on payload!'
-    return erb :error
-  end
-
-  parts = signed_payload.split('.')
-  payload = JSON.parse(Base64.decode64(parts[0]), {:symbolize_names => true})
-
-  user = User.first(:email => payload[:user][:email], :store_hash => payload[:store_hash])
-
-  unless user
-    @error = 'Invalid User!'
-    return erb :error
-  end
-
-  session[:user_id] = user.id
-  redirect '/'
-
-end
-
-# Callback endpoint
-#
+# Auth callback
 get '/auth/:name/callback' do
-
   auth = request.env['omniauth.auth']
   if auth && auth[:extra][:raw_info][:context]
+    logger.info "[install] Installing app for user '#{auth[:info][:email]}'"
 
     store_hash = auth[:extra][:raw_info][:context].split('/')[1]
 
-    user = User.all(:email => auth[:info][:email], :store_hash => store_hash).first
-    unless user
-      user = User.new({ :email => auth[:info][:email],
-                        :store_hash => store_hash
-                      })
-    end
+    user = User.first(email: auth[:info][:email], store_hash: store_hash)
+    user ||= User.new(email: auth[:info][:email], store_hash: store_hash)
     user.access_token = auth[:credentials][:token].token
     user.save!
+
     session[:user_id] = user.id
     return redirect '/'
   end
-  @error = 'Invalid credentials! Got: '+JSON.pretty_generate(auth[:extra])
-  return erb :error
 
+  @error = "Invalid credentials: #{JSON.pretty_generate(auth[:extra])}"
+  logger.info "[install] ERROR: #{@error}"
+  return erb :error
+end
+
+# Load endpoint
+get '/load' do
+  # Decode payload
+  signed_payload = params[:signed_payload]
+  payload = parse_signed_payload(signed_payload, bc_client_secret)
+  if payload.nil?
+    @error = 'Invalid signature on payload!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  email = payload[:user][:email]
+  store_hash = payload[:store_hash]
+  logger.info "[load] Loading app for user '#{email}'"
+
+  # Get user
+  user = User.first(email: email, store_hash: store_hash)
+  if user.nil?
+    @error = 'Invalid User!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  # Login and redirect to home page
+  session[:user_id] = user.id
+  redirect '/'
+end
+
+# Events endpoint
+get '/events' do
+  # Decode payload
+  signed_payload = params[:signed_payload]
+  payload = parse_signed_payload(signed_payload, bc_client_secret)
+  if payload.nil?
+    @error = 'Invalid signature on payload!'
+    logger.info "[events] ERROR: #{@error}"
+    return erb :error
+  end
+
+  email = payload[:user][:email]
+  store_hash = payload[:store_hash]
+  event = payload[:event]
+  logger.info "[events] event '#{event}' for user '#{email}'"
+
+  case event
+  when 'add-user'
+    # The add-user event gives us a temporary oauth code that we need to exchange
+    # for a full token. We also need to provision the user and redirect them to
+    # our welcome page.
+    user = User.first(email: email, store_hash: store_hash)
+    if user.nil?
+      token = bc_token_exchange payload[:oauth_code], payload[:context]
+      logger.info "[events] token = #{token}"
+      unless token.nil?
+        user = User.new(email: email, store_hash: store_hash)
+        user.access_token = token[:access_token]
+        user.save!
+      end
+    end
+
+    session[:user_id] = user.id
+    return redirect '/'
+  when 'remove-user'
+    # Deprovision user
+    user = User.first(email: email, store_hash: store_hash)
+    user.destroy if user
+    return 204
+  end
+
+  @error = 'Invalid event!'
+  logger.info "[events] ERROR: #{@error}"
+  return erb :error
 end
 
 # Gets the current user in session
-#
 def current_user
-  unless session[:user_id].nil?
-    return User.get(session[:user_id])
-  end
-  nil
+  session[:user_id] ? User.get(session[:user_id]) : nil
 end
 
 # Verify given signed_payload string and return the data if valid.
-#
-def verify(signed_payload, client_secret)
+def parse_signed_payload(signed_payload, client_secret)
   message_parts = signed_payload.split('.')
 
   encoded_json_payload = message_parts[0]
   encoded_hmac_signature = message_parts[1]
 
-  payload_object = Base64.decode64(encoded_json_payload)
+  payload = Base64.decode64(encoded_json_payload)
   provided_signature = Base64.decode64(encoded_hmac_signature)
 
-  expected_signature = sign(client_secret, payload_object)
+  expected_signature = sign(client_secret, payload)
 
-  return false unless secure_compare(expected_signature, provided_signature)
+  if secure_compare(expected_signature, provided_signature)
+    return JSON.parse(payload, symbolize_names: true)
+  end
 
-  payload_object
+  nil
 end
 
 # Sign payload string using HMAC-SHA256 with given secret
-#
 def sign(secret, payload)
   OpenSSL::HMAC::hexdigest('sha256', secret, payload)
 end
 
-# Time consistent string comparison.
-# Most library implementation will fail fast allowing timing attacks.
-#
-#
+# Time consistent string comparison. Most library implementations
+# will fail fast allowing timing attacks.
 def secure_compare(a, b)
   return false if a.blank? || b.blank? || a.bytesize != b.bytesize
   l = a.unpack "C#{a.bytesize}"
@@ -182,21 +212,58 @@ def secure_compare(a, b)
 end
 
 # Get client id from env
-#
 def bc_client_id
   ENV['BC_CLIENT_ID']
 end
 
 # Get client secret from env
-#
 def bc_client_secret
   ENV['BC_CLIENT_SECRET']
 end
 
 # Get the API url from env
-#
 def bc_api_url
   ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerceapp.com'
 end
 
+# Full url to this app
+def app_url
+  ENV['APP_URL']
+end
 
+# The scopes we are requesting (must match what we entered when
+# we registered the app)
+def scopes
+  'store_v2_products'
+end
+
+# The auth callback url for this app (must match what we entered
+# when we registered the app)
+def callback_uri
+  "#{app_url}/auth/bigcommerce/callback"
+end
+
+# Exchange oauth code for long-expiry token
+def bc_token_exchange(code, context)
+  service_url = ENV['BC_AUTH_SERVICE'] || 'https://login.bigcommerce.com'
+  service_url = "#{service_url}/oauth2/token"
+
+  params = {
+    client_id: bc_client_id,
+    client_secret: bc_client_secret,
+    code: code,
+    scope: scopes,
+    grant_type: 'authorization_code',
+    redirect_uri: callback_uri,
+    context: context
+  }
+
+  begin
+    resp = RestClient.post service_url, params
+    return JSON.parse(resp.body, symbolize_names: true)
+  rescue RestClient::Exception => e
+    raise AuthorizationError, "Error from auth service: #{e.response.body}"
+  end
+
+  nil
+end
