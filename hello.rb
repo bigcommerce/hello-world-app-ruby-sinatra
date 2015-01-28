@@ -28,7 +28,7 @@ configure do
   end
 end
 
-DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite3://#{Dir.pwd}/dev.db")
+DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite3://#{Dir.pwd}/data/dev.db")
 
 # User model representation
 class User

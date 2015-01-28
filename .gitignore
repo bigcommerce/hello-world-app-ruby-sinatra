@@ -1,4 +1,4 @@
 .env
 .bundle
 vendor/bundle
-dev.db
+data/dev.db
