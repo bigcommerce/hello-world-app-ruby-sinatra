@@ -46,6 +46,7 @@ class User
     config = {
       store_hash: self.store_hash,
       client_id: bc_client_id,
+      client_secret: bc_client_secret,
       access_token: self.access_token
     }
     Bigcommerce::Api.new(config)
@@ -223,7 +224,7 @@ end
 
 # Get the API url from env
 def bc_api_url
-  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerceapp.com'
+  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerce.com'
 end
 
 # Full url to this app
@@ -234,7 +235,18 @@ end
 # The scopes we are requesting (must match what we entered when
 # we registered the app)
 def scopes
-  'store_v2_products'
+  # Content   store_v2_content
+  # Customers store_v2_customers
+  # Geography default
+  # Marketing store_v2_marketing
+  # Products  store_v2_products
+  # Orders    store_v2_orders
+  # Payments  store_v2_information
+  # Shipping  store_v2_information
+  # Store     store_v2_information
+  # System    default
+  # Tax       store_v2_information
+  'store_v2_orders store_v2_products store_v2_customers store_v2_content store_v2_marketing'
 end
 
 # The auth callback url for this app (must match what we entered
