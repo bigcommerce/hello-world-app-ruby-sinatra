@@ -26,7 +26,7 @@
 
  - Change to the directory this repo was cloned to: `cd <path to project>`
  - Create a new Heroku app: `heroku create <appname>`
- - Push the project to Heroku: `git push heroku`
+ - Push the project to Heroku: `git push heroku master -u`
  - Copy `./.env-example` to `./.env`
  - Edit `.env`:
    - Set `BC_CLIENT_ID` and `BC_CLIENT_SECRET` to the values provided by Bigcommerce (in the developer portal the app has a link/icon labled `View Client ID`)
