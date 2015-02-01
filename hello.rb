@@ -204,7 +204,7 @@ get '/events' do
   return erb :error
 end
 
-get '/page/:page'
+get '/page/:page' do
   @page = params[:page]
   return erb :page
 end
