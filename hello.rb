@@ -204,6 +204,11 @@ get '/events' do
   return erb :error
 end
 
+get '/page/:page'
+  @page = params[:page]
+  return erb :page
+end
+
 # Gets the current user in session
 def current_user
   session[:user_id] ? User.get(session[:user_id]) : nil
