@@ -126,6 +126,38 @@ get '/load' do
   redirect '/'
 end
 
+# Uninstall endpoint
+get '/uninstall' do
+  # Decode payload
+  signed_payload = params[:signed_payload]
+  payload = parse_signed_payload(signed_payload, bc_client_secret)
+  if payload.nil?
+    @error = 'Invalid signature on payload!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  email = payload[:user][:email]
+  store_hash = payload[:store_hash]
+  logger.info "[load] Uninstalling app for user '#{email}'"
+
+  # Get user
+  user = User.first(email: email, store_hash: store_hash)
+  if user.nil?
+    @error = 'Invalid User!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  # Delete user in persistence layer
+  user.destroy
+
+  # Delete session
+  session[:user_id] = nil
+
+  return erb :ok
+end
+
 # Events endpoint
 get '/events' do
   # Decode payload
