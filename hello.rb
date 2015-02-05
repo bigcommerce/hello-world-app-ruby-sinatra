@@ -46,6 +46,7 @@ class User
     config = {
       store_hash: self.store_hash,
       client_id: bc_client_id,
+      client_secret: bc_client_secret,
       access_token: self.access_token
     }
     Bigcommerce::Api.new(config)
@@ -125,6 +126,38 @@ get '/load' do
   redirect '/'
 end
 
+# Uninstall endpoint
+get '/uninstall' do
+  # Decode payload
+  signed_payload = params[:signed_payload]
+  payload = parse_signed_payload(signed_payload, bc_client_secret)
+  if payload.nil?
+    @error = 'Invalid signature on payload!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  email = payload[:user][:email]
+  store_hash = payload[:store_hash]
+  logger.info "[load] Uninstalling app for user '#{email}'"
+
+  # Get user
+  user = User.first(email: email, store_hash: store_hash)
+  if user.nil?
+    @error = 'Invalid User!'
+    logger.info "[load] ERROR: #{@error}"
+    return erb :error
+  end
+
+  # Delete user in persistence layer
+  user.destroy
+
+  # Delete session
+  session[:user_id] = nil
+
+  return erb :ok
+end
+
 # Events endpoint
 get '/events' do
   # Decode payload
@@ -169,6 +202,11 @@ get '/events' do
   @error = 'Invalid event!'
   logger.info "[events] ERROR: #{@error}"
   return erb :error
+end
+
+get '/page/:page' do
+  @page = params[:page]
+  return erb :page
 end
 
 # Gets the current user in session
@@ -223,7 +261,7 @@ end
 
 # Get the API url from env
 def bc_api_url
-  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerceapp.com'
+  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerce.com'
 end
 
 # Full url to this app
@@ -234,7 +272,18 @@ end
 # The scopes we are requesting (must match what we entered when
 # we registered the app)
 def scopes
-  'store_v2_products'
+  # Content   store_v2_content
+  # Customers store_v2_customers
+  # Geography default
+  # Marketing store_v2_marketing
+  # Products  store_v2_products
+  # Orders    store_v2_orders
+  # Payments  store_v2_information
+  # Shipping  store_v2_information
+  # Store     store_v2_information
+  # System    default
+  # Tax       store_v2_information
+  'store_v2_orders store_v2_products store_v2_customers store_v2_content store_v2_marketing'
 end
 
 # The auth callback url for this app (must match what we entered
