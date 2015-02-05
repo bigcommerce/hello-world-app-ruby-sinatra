@@ -5,7 +5,7 @@ gem 'sinatra'
 gem 'thin'
 gem 'rest-client'
 gem 'dotenv'
-gem 'bigcommerce', :github => 'mechatama/bigcommerce-api-ruby', :branch => 'oauth'
+gem 'bigcommerce'
 gem 'datamapper'
 
 group :production do
