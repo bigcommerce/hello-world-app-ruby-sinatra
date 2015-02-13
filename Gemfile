@@ -1,12 +1,12 @@
 source 'https://rubygems.org'
 
-gem 'omniauth-bigcommerce', git: 'https://github.com/bigcommerce/omniauth-bigcommerce.git'
-gem 'sinatra'
-gem 'thin'
-gem 'rest-client'
-gem 'dotenv'
 gem 'bigcommerce'
+gem 'omniauth-bigcommerce', git: 'https://github.com/bigcommerce/omniauth-bigcommerce.git'
+
+gem 'sinatra'
 gem 'datamapper'
+gem 'thin'
+gem 'dotenv'
 
 group :production do
   gem "pg"
