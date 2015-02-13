@@ -143,7 +143,6 @@ DEPENDENCIES
   dotenv
   omniauth-bigcommerce!
   pg
-  rest-client
   sinatra
   sqlite3
   thin

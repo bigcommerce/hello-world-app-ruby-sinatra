@@ -1,16 +1,25 @@
 <html>
-<body>
-  <h1>Welcome <%= @user.email %>!</h1>
-	<br>
-	<h2>Client ID: <%= @client_id %></h2>
-	<h2>Credentials</h2>
-	<pre><%= @user.to_json %></pre>
-	<hr>
-	<h2>CURL</h2>
-	<pre>curl -XGET -v -H 'Accept: application/json' -H 'X-Auth-Client: <%= @client_id %>' -H 'X-Auth-Token: <%= @user.access_token %>' <%= @bc_api_url + "/stores/#{@user.store_hash}/v2/products" %>
-	</pre>
-	<hr>
-	<h2>Products</h2>
-	<pre><%= @products %></pre>
-</body>
+  <body>
+    <h1>Welcome <%= @user.email %>!</h1>
+
+    <hr/>
+    <h2>Client ID</h2>
+    <pre><%= @client_id %></pre>
+
+    <hr/>
+    <h2>User</h2>
+    <pre><%= @user.to_json %></pre>
+
+    <hr/>
+    <h2>Store</h2>
+    <pre><%= @user.store.to_json %></pre>
+
+    <hr/>
+    <h2>CURL</h2>
+    <pre>curl -XGET -v -H 'Accept: application/json' -H 'X-Auth-Client: <%= @client_id %>' -H 'X-Auth-Token: <%= @user.store.access_token %>' <%= "#{@bc_api_url}/stores/#{@user.store.store_hash}/v2/products" %></pre>
+
+    <hr/>
+    <h2>Products</h2>
+    <pre><%= @products %></pre>
+  </body>
 </html>
