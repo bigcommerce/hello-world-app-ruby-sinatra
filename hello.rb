@@ -249,7 +249,7 @@ end
 
 # Get the API url from env
 def bc_api_url
-  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerceapp.com'
+  ENV['BC_API_ENDPOINT'] || 'https://api.bigcommerce.com'
 end
 
 # Full url to this app
