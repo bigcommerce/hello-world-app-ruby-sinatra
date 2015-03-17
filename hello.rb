@@ -52,20 +52,6 @@ class Store
 
   validates_presence_of :access_token, :store_hash
   validates_uniqueness_of :store_hash
-
-  def bc_api
-    config = {
-      store_hash: self.store_hash,
-      client_id: bc_client_id,
-      access_token: self.access_token
-    }
-    Bigcommerce::Api.new(config)
-  end
-
-  def bc_api_working?
-    time = bc_api.time
-    time && time.key?("time")
-  end
 end
 
 DataMapper.finalize.auto_upgrade!
@@ -77,7 +63,13 @@ get '/' do
 
   @bc_api_url = bc_api_url
   @client_id = bc_client_id
-  @products = JSON.pretty_generate(@user.store.bc_api.products)
+
+  Bigcommerce.configure do |config|
+    config.store_hash = @user.store.store_hash
+    config.client_id = @client_id
+    config.access_token = @user.store.access_token
+  end
+  @products = Bigcommerce::Product.all
 
   erb :index
 end

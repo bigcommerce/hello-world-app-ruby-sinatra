@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'bigcommerce'
+gem 'bigcommerce', '>= 1.0.0.beta'
 gem 'omniauth-bigcommerce', git: 'https://github.com/bigcommerce/omniauth-bigcommerce.git'
 
 gem 'sinatra'
