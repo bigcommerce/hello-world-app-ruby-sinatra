@@ -12,11 +12,11 @@
 
     <hr/>
     <h2>Store</h2>
-    <pre><%= @user.store.to_json %></pre>
+    <pre><%= @store.to_json %></pre>
 
     <hr/>
     <h2>CURL</h2>
-    <pre>curl -XGET -v -H 'Accept: application/json' -H 'X-Auth-Client: <%= @client_id %>' -H 'X-Auth-Token: <%= @user.store.access_token %>' <%= "#{@bc_api_url}/stores/#{@user.store.store_hash}/v2/products" %></pre>
+    <pre>curl -XGET -v -H 'Accept: application/json' -H 'X-Auth-Client: <%= @client_id %>' -H 'X-Auth-Token: <%= @store.access_token %>' <%= "#{@bc_api_url}/stores/#{@store.store_hash}/v2/products" %></pre>
 
     <hr/>
     <h2>Products</h2>
