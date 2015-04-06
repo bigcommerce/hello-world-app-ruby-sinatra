@@ -30,9 +30,9 @@ class User
   include DataMapper::Resource
 
   property :id,    Serial
-  property :email, String, required: true, unique: [:store_id]
+  property :email, String, required: true, unique: true
 
-  belongs_to :store
+  has n, :stores, :through => Resource
 end
 
 # Bigcommerce store model
@@ -43,7 +43,7 @@ class Store
   property :store_hash,   String, required: true
   property :access_token, String, required: true
 
-  has n, :users
+  has n, :users, :through => Resource
 
   # Since we support multiple users per store, we keep track of
   # which user installed the app and treat them as the admin for
@@ -73,11 +73,12 @@ DataMapper.finalize.auto_upgrade!
 # App interface
 get '/' do
   @user = current_user
-  return render_error('[home] Unauthorized!') unless @user
+  @store = current_store
+  return render_error('[home] Unauthorized!') unless @user && @store
 
   @bc_api_url = bc_api_url
   @client_id = bc_client_id
-  @products = JSON.pretty_generate(@user.store.bc_api.products)
+  @products = JSON.pretty_generate(@store.bc_api.products)
 
   erb :index
 end
@@ -95,19 +96,27 @@ get '/auth/:name/callback' do
 
   # Lookup store
   store = Store.first(store_hash: store_hash)
-  return render_error("[install] Already installed!") if store
+  if store
+    user = store.admin_user
+  else
+    # Create store record
+    logger.info "[install] Installing app for store '#{store_hash}' with admin '#{email}'"
+    store = Store.create(store_hash: store_hash, access_token: token)
 
-  # Create store record
-  logger.info "[install] Installing app for store '#{store_hash}' with admin '#{email}'"
-  store = Store.create(store_hash: store_hash, access_token: token)
+    # Create admin user and associate with store
+    user = User.first_or_create(email: email)
+    user.stores << store
+    user.save
 
-  # Create admin user
-  user = User.first_or_create(email: email, store_id: store.id)
-  store.admin_user_id = user.id
-  store.save!
+    # Set admin user in Store record
+    store.admin_user_id = user.id
+    store.save
+  end
 
   # Other one-time installation provisioning goes here.
 
+  # Login and redirect to home page
+  session[:store_id] = store.id
   session[:user_id] = user.id
   redirect '/'
 end
@@ -127,11 +136,18 @@ get '/load' do
   return render_error("[load] Store not found!") unless store
 
   # Find/create user
-  user = User.first_or_create(email: email, store_id: store.id)
-  return render_error('[load] Invalid user!') unless user
+  user = User.first_or_create(email: email)
+  return render_error('[load] User not found!') unless user
+
+  # Add store association if it doesn't exist
+  unless StoreUser.first(store_id: store.id, user_id: user.id)
+    user.stores << store
+    user.save
+  end
 
   # Login and redirect to home page
-  logger.info "[load] Loading app for user '#{email}'"
+  logger.info "[load] Loading app for user '#{email}' on store '#{store_hash}'"
+  session[:store_id] = store.id
   session[:user_id] = user.id
   redirect '/'
 end
@@ -150,13 +166,14 @@ get '/uninstall' do
   return render_error("[uninstall] Store not found!") unless store
 
   # Verify that the user performing the operation exists and is the admin
-  user = User.first(email: email, store_id: store.id)
-  return render_error('[uninstall] Unauthorized!') unless user && user.id == store.admin_user_id
+  user = User.first(email: email)
+  unless user && user.id == store.admin_user_id
+    return render_error('[uninstall] Unauthorized!')
+  end
 
-  # They are uninstalling our app from the store, so deprovision
-  # store and all its users
+  # They are uninstalling our app from the store, so deprovision store
   logger.info "[uninstall] Uninstalling app for store '#{store_hash}'"
-  store.users.destroy
+  StoreUser.all(store_id: store.id).destroy
   store.destroy
 
   # Return 204
@@ -181,18 +198,29 @@ get '/remove-user' do
   store = Store.first(store_hash: store_hash)
   return render_error("[remove-user] Store not found!") unless store
 
-  # Deprovision user if it exists
+  # Remove StoreUser association
   logger.info "[remove-user] Removing user '#{email}' from store '#{store_hash}'"
-  user = User.first(email: email, store_id: store.id)
-  user.destroy if user
+  user = User.first(email: email)
+  if user
+    StoreUser.first(store_id: store.id, user_id: user.id).destroy
+  end
 
   # Return 204
   return 204
 end
 
-# Gets the current user in session
+# Gets the current user from session
 def current_user
-  session[:user_id] ? User.get(session[:user_id]) : nil
+  return nil unless session[:user_id]
+  User.get(session[:user_id])
+end
+
+# Gets the current user's store from session
+def current_store
+  user = current_user
+  return nil unless user
+  return nil unless session[:store_id]
+  user.stores.get(session[:store_id])
 end
 
 # Verify given signed_payload string and return the data if valid.
