@@ -184,7 +184,7 @@ end
 # Remove user endpoint; used when multi-user support is enabled.
 # Note that you should accept user ids that you may not have seen
 # yet. This is possible when Bigcommerce store owners enable access
-# for one of their users, but then revokes access before they 
+# for one of their users, but then revokes access before they
 # actually load the app.
 get '/remove-user' do
   # Decode payload
