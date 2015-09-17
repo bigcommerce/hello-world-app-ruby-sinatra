@@ -1,0 +1,19 @@
+dev:
+  extends:
+    service: hello_world_ruby
+    file: ../../docker-compose.yml
+  volumes:
+    - .:/opt/services/hello-world-app-ruby-sinatra
+  command: bash -c "bundle && bundle exec rake db:migrate && foreman start"
+  build: .
+
+prod:
+  image: hub.services.bigcommerceapp.com/bigcommerce/hello-world-ruby:latest
+  container_name: hello_world_ruby
+  hostname: hello_world_ruby
+  external_links:
+    - redis:redis
+  ports:
+    - '5000'
+  env_file:
+    - .env-example
