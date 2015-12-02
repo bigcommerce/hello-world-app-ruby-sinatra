@@ -4,7 +4,7 @@ dev:
     file: ../../docker-compose.yml
   volumes:
     - .:/opt/services/hello-world-app-ruby-sinatra
-  command: bash -c "bundle && bundle exec rake db:migrate && foreman start"
+  command: bash -c "bundle && foreman start"
   build: .
 
 prod:
