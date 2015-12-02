@@ -1,4 +1,4 @@
-FROM bigcommerce/ruby:2.0.0-p576
+FROM hub.services.bigcommerceapp.com/bigcommerce/ruby:2.0.0-p576
 
 RUN apt-get update &&\
     apt-get install -y -q sqlite3 libsqlite3-dev libpq-dev &&\

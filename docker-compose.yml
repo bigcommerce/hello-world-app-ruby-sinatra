@@ -3,7 +3,7 @@ dev:
     service: hello_world_ruby
     file: ../../docker-compose.yml
   volumes:
-    - .:/opt/services/hello-world-app-ruby-sinatra
+    - .:/opt/services/hello-world-ruby
   command: bash -c "bundle && foreman start"
   build: .
 
