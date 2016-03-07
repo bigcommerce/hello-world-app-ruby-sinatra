@@ -42,6 +42,7 @@ class Store
   property :id,           Serial
   property :store_hash,   String, required: true
   property :access_token, String, required: true
+  property :scope,        String, required: true
 
   has n, :users, :through => Resource
 
@@ -93,15 +94,17 @@ get '/auth/:name/callback' do
   email = auth[:info][:email]
   store_hash = auth[:extra][:raw_info][:context].split('/')[1]
   token = auth[:credentials][:token].token
+  scope = params[:scope]
 
   # Lookup store
   store = Store.first(store_hash: store_hash)
   if store
+    store.update(access_token: token, scope: scope)
     user = store.admin_user
   else
     # Create store record
     logger.info "[install] Installing app for store '#{store_hash}' with admin '#{email}'"
-    store = Store.create(store_hash: store_hash, access_token: token)
+    store = Store.create(store_hash: store_hash, access_token: token, scope: scope)
 
     # Create admin user and associate with store
     user = User.first_or_create(email: email)
