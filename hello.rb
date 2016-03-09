@@ -42,7 +42,7 @@ class Store
   property :id,           Serial
   property :store_hash,   String, required: true
   property :access_token, String, required: true
-  property :scope,        String, required: true
+  property :scope,        Text
 
   has n, :users, :through => Resource
 
