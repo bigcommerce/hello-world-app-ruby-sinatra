@@ -1,4 +1,4 @@
-FROM hub.services.bigcommerceapp.com/bigcommerce/ruby:2.0.0-p576
+FROM hub.services.bigcommerceapp.com/bigcommerce/ruby:2.3.0
 
 RUN apt-get update &&\
     apt-get install -y -q sqlite3 libsqlite3-dev libpq-dev &&\
@@ -10,6 +10,7 @@ ENV BUNDLE_PATH /var/bundle
 ENV GEM_HOME $BUNDLE_PATH
 ENV HOME $WORKDIR
 ENV BUNDLE_APP_CONFIG $GEM_HOME
+ENV CUSTOM_RUBY_VERSION 2.3.0
 
 RUN groupadd app &&\
     useradd -g app -d $WORKDIR -s /sbin/nologin -c 'Docker image user for the app' app &&\
