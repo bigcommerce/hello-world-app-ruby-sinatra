@@ -92,9 +92,9 @@ get '/auth/:name/callback' do
   end
 
   email = auth[:info][:email]
-  store_hash = auth[:extra][:raw_info][:context].split('/')[1]
+  store_hash = auth[:extra][:context].split('/')[1]
   token = auth[:credentials][:token].token
-  scope = params[:scope]
+  scope = auth[:extra][:scopes]
 
   # Lookup store
   store = Store.first(store_hash: store_hash)
