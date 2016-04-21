@@ -5,7 +5,7 @@ ruby ENV['CUSTOM_RUBY_VERSION'] || '2.0.0'
 gem 'bigcommerce'
 gem 'omniauth-bigcommerce', git: 'https://github.com/bigcommerce/omniauth-bigcommerce.git'
 
-gem 'sinatra'
+gem 'sinatra', '~> 1.4.7'
 gem 'datamapper'
 gem 'thin'
 gem 'dotenv'
