@@ -99,6 +99,7 @@ get '/auth/:name/callback' do
   # Lookup store
   store = Store.first(store_hash: store_hash)
   if store
+    logger.info "[install] Updating token for store '#{store_hash}' with scope '#{scope}'"
     store.update(access_token: token, scope: scope)
     user = store.admin_user
   else
@@ -187,7 +188,7 @@ end
 # Remove user endpoint; used when multi-user support is enabled.
 # Note that you should accept user ids that you may not have seen
 # yet. This is possible when Bigcommerce store owners enable access
-# for one of their users, but then revokes access before they 
+# for one of their users, but then revokes access before they
 # actually load the app.
 get '/remove-user' do
   # Decode payload
