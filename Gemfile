@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby ENV['CUSTOM_RUBY_VERSION'] || '2.0.0'
+ruby ENV['CUSTOM_RUBY_VERSION'] || '2.2.5'
 
 gem 'bigcommerce'
 gem 'omniauth-bigcommerce', '~> 0.3.0'
