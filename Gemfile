@@ -11,11 +11,12 @@ gem 'thin'
 gem 'dotenv'
 
 group :production do
-  gem "pg"
-  gem "dm-postgres-adapter"
+  gem 'pg', '>= 0.15'
+  gem 'dm-postgres-adapter'
+  gem 'do_postgres', '>= 0.10.17'
 end
 
 group :development do
-  gem "sqlite3"
-  gem "dm-sqlite-adapter"
+  gem 'sqlite3'
+  gem 'dm-sqlite-adapter'
 end
