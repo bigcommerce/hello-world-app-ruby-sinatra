@@ -1,4 +1,4 @@
-FROM hub.services.bigcommerceapp.com/bigcommerce/ruby:2.3.0
+FROM 347907137948.dkr.ecr.us-east-1.amazonaws.com/ruby:2.3.0
 
 RUN apt-get update &&\
     apt-get install -y -q sqlite3 libsqlite3-dev libpq-dev &&\
