@@ -1,15 +1,15 @@
-# Bigcommerce Sample App: Ruby
+# BigCommerce Sample App: Ruby
 This is a small Sinatra application that implements the OAuth callback flow for Bigcommerce [Single Click Apps][single_click_apps]
-and uses the [Bigcommerce API][api_client] to pull a list of products on a Bigcommerce store. For information on how to develop apps
-for Bigcommerce stores, see our [Developer Portal][devportal].
+and uses the [Bigcommerce API][api_client] to pull a list of products on a BigcCommerce store. For information on how to develop apps
+for BigCommerce stores, see our [Developer Portal][devdocs].
 
 We hope this sample app gives you a good starting point for building your next killer app! What follows are steps specific
 to running and installing this sample appication.
 
-### Registering the app with Bigcommerce
-* Create a trial store on [Bigcommerce](https://www.bigcommerce.com/)
-* Go to the [Developer Portal][devportal] and log in.
-* Go to "My Apps"
+### Registering the app with BigCommerce
+* Create a trial store on [BigCommerce](https://www.bigcommerce.com/)
+* Go to the [Developer Portal][devdocs] and click "My Apps".
+* Login to your account.
 * Click the button "Create an app", enter a name for the new app, and then click "Create"
 * You don't have to fill out all the details for your app right away, but you do need
 to provide some core details in section 4 (Technical). Note that if you are just getting
@@ -36,7 +36,7 @@ _View Client ID_. You'll need these values in the next step.
 * Run the app: `foreman start`
 
 ### Hosting the app
-In order to install this app in a Bigcommerce store, it must be hosted on the public Internet. You can get started in development
+In order to install this app in a BigCommerce store, it must be hosted on the public Internet. You can get started in development
 by simply running `foreman start` to run it locally, and then use `localhost` in your URLs, but ultimately you will need to host
 it somewhere to use the app anywhere other than your development system. One easy option is to put it on Heroku.
 
@@ -50,7 +50,7 @@ the toolbelt. See [Heroku][toolbelt] for details._
 * Add the `heroku-config` plugin: `heroku plugins:install git://github.com/ddollar/heroku-config.git`
 * Push the local environment variables to heroku: `heroku config:push`
 
-In the Bigcommerce Developer Portal, you'll need to update the app's callback URLs:
+In the [BigCommerce Developer Portal][devportal], you'll need to update the app's callback URLs:
 
 * _Auth Callback URL_: `https://<appname>.herokuapp.com/auth/bigcommerce/callback`
 * _Load Callback URL_: `https://<appname>.herokuapp.com/load`
@@ -61,7 +61,8 @@ In the Bigcommerce Developer Portal, you'll need to update the app's callback UR
 * Go to the Marketplace and click _My Drafts_. Find the app you just created and click it.
 * A details dialog will open. Click _Install_ and the draft app will be installed in your store.
 
-[single_click_apps]: https://developer.bigcommerce.com/api/using-oauth-intro
+[single_click_apps]: https://developer.bigcommerce.com/api/#building-oauth-apps
 [api_client]: https://github.com/bigcommerce/bigcommerce-api-ruby
-[devportal]: https://developer.bigcommerce.com
+[devdocs]: https://developer.bigcommerce.com
+[devportal]: https://devtools.bigcommerce.com
 [toolbelt]: https://toolbelt.heroku.com
