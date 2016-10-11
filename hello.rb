@@ -84,6 +84,10 @@ get '/' do
   erb :index
 end
 
+get '/instructions' do
+  erb :instructions
+end
+
 # Auth callback
 get '/auth/:name/callback' do
   auth = request.env['omniauth.auth']

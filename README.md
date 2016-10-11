@@ -1,6 +1,7 @@
-# BigCommerce Sample App: Ruby
-This is a small Sinatra application that implements the OAuth callback flow for Bigcommerce [Single Click Apps][single_click_apps]
-and uses the [Bigcommerce API][api_client] to pull a list of products on a BigcCommerce store. For information on how to develop apps
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) [(Heroku instructions)](#getting-started-heroku-version)
+# Bigcommerce Sample App: Ruby
+This is a small Sinatra application that implements the OAuth callback flow for BigCommerce [Single Click Apps][single_click_apps]
+and uses the [BigCommerce API][api_client] to pull a list of products on a BigcCommerce store. For information on how to develop apps
 for BigCommerce stores, see our [Developer Portal][devdocs].
 
 We hope this sample app gives you a good starting point for building your next killer app! What follows are steps specific
@@ -40,21 +41,12 @@ In order to install this app in a BigCommerce store, it must be hosted on the pu
 by simply running `foreman start` to run it locally, and then use `localhost` in your URLs, but ultimately you will need to host
 it somewhere to use the app anywhere other than your development system. One easy option is to put it on Heroku.
 
-#### Heroku
-_Note: It is assumed that you already have a Heroku account, have the Heroku toolbelt installed, and have authenticated with
-the toolbelt. See [Heroku][toolbelt] for details._
-
-* Create a new Heroku app: `heroku create <appname>`
-* Push the project to Heroku: `git push heroku master -u`
-* Set `APP_URL` in .env to `https://<appname>.herokuapp.com`
-* Add the `heroku-config` plugin: `heroku plugins:install git://github.com/ddollar/heroku-config.git`
-* Push the local environment variables to heroku: `heroku config:push`
-
-In the [BigCommerce Developer Portal][devportal], you'll need to update the app's callback URLs:
-
-* _Auth Callback URL_: `https://<appname>.herokuapp.com/auth/bigcommerce/callback`
-* _Load Callback URL_: `https://<appname>.herokuapp.com/load`
-* _Uninstall Callback URL_: `https://<appname>.herokuapp.com/uninstall`
+### Getting started (Heroku version)
+1. Click this button: [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+2. Fill in the details from the app portal on the Heroku deployment page
+  * See [Registering the app with BigCommerce](#registering-the-app-with-bigcommerce) above. Ignore the callback URLs, just save the app to get the Client ID and Client Secret.
+3. Deploy the app, and click "view" when it's done
+4. Take the callback URLs from the instructions page and plug them into the dev portal. All done!
 
 ### Installing the app in your trial store
 * Login to your trial store
