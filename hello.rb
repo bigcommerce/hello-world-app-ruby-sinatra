@@ -6,6 +6,11 @@ require 'base64'
 require 'openssl'
 require 'bigcommerce'
 require 'logger'
+require 'jwt'
+require 'money'
+require 'cachy'
+require 'redis'
+
 
 configure do
   set :run, true
@@ -21,6 +26,10 @@ configure do
     provider :bigcommerce, bc_client_id, bc_client_secret, scope: scopes
     OmniAuth.config.full_host = app_url || nil
   end
+
+  I18n.config.available_locales = :en
+
+  Cachy.cache_store = Redis.new
 end
 
 DataMapper.setup(:default, ENV['DATABASE_URL'] || "sqlite3://#{Dir.pwd}/data/dev.db")
@@ -215,6 +224,78 @@ get '/remove-user' do
 
   # Return 204
   return 204
+end
+
+##
+# GET /storefront/:store_hash/customers/:jwt/recently_purchased.html
+# Fetches the HTML for the 'recently_purchased' products block, or
+# an empty string if none are specified
+get '/storefront/:store_hash/customers/:jwt/recently_purchased.html' do
+  # To allow the store to make an ajax request to us we need to enable cross-origin resource sharing:
+  headers 'Access-Control-Allow-Origin' => '*'
+  begin
+    # Get the JWT token, store hash and confirm the customer is who they say they are.
+    # If they aren't a JWT::DecodeError will be thrown by the json-jwt gem.
+    jwt_token, store_hash = params[:jwt], params[:store_hash]
+    customer_id = get_customer_id_from_token(jwt_token)
+
+    # Now let's find the store we're working with
+    store = Store.first(store_hash: store_hash)
+    raise StandardError, "Store with hash #{store_hash} not found." unless store
+
+    # Here's the meat of the endpoint: find the recently purchased products.
+    # @see #recently_purchased_products
+    @products = recently_purchased_products(store, customer_id)
+
+    erb :'storefront/customers/recently_purchased'
+  rescue JWT::DecodeError => jwt_error
+    logger.error "Got a JWT error so returned empty html: #{jwt_error.inspect}"
+    return ''
+  rescue StandardError => e
+    logger.error "Got an unexpected error: #{e.inspect}"
+    return ''
+  end
+end
+
+##
+# Gets recently purchased products in a store by the given customer.
+# Caches the data received from BigCommerce
+#
+# @param [Store] store Store model from this example class (defined above)
+# @param [String] customer_id ID of the customer we want to get recently purchased products for
+# @param [Boolean] use_cache (default = true) If true, result will be cached for 15 minutes.
+#
+# @return [Array] List of product data hashes retrieved from the BC v2 API
+def recently_purchased_products(store, customer_id, use_cache = true)
+  cache_key = :"customers/#{customer_id}/orders/products"
+
+  prods = Cachy.cache(cache_key, expires_in: 60*15) do
+    @orders = store.bc_api.orders(customer_id: customer_id)
+    products = []
+    @orders.each do |order|
+      store.bc_api.orders_products(order['id']).each do |order_product|
+        products << store.bc_api.product(order_product['product_id'])
+      end
+    end
+    products
+  end
+
+  # If we used cache and no products were found then try again without using cache
+  if prods.empty? && use_cache
+    recently_purchased_products(store, customer_id, false)
+  else
+    prods
+  end
+end
+
+##
+# Validates the JWT token and returns the customer's ID from the JWT token.
+# @param [String] jwt_token JWT token as received from the storefront.
+#
+# @return [String] BigCommerce customer's ID as a string
+def get_customer_id_from_token(jwt_token)
+  signed_data = JWT.decode(jwt_token, bc_client_secret, true)
+  signed_data[0]['customer']['id'].to_s
 end
 
 # Gets the current user from session

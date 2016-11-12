@@ -40,5 +40,6 @@
   },
   "image": "heroku/ruby",
   "addons": [
+    "heroku-redis"
   ]
 }

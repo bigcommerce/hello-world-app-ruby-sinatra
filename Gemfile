@@ -10,6 +10,12 @@ gem 'datamapper'
 gem 'thin'
 gem 'dotenv'
 
+# For JWT example:
+gem 'jwt'
+gem 'money'
+gem 'cachy'
+gem 'redis'
+
 group :production do
   gem 'pg', '>= 0.15'
   gem 'dm-postgres-adapter'

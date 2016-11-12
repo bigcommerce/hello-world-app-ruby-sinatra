@@ -15,6 +15,8 @@ GEM
       activesupport
       json
       rest-client
+    cachy (0.4.1)
+      mini_memory_store
     daemons (1.2.3)
     data_objects (0.10.17)
       addressable (~> 2.1)
@@ -84,7 +86,11 @@ GEM
     json_pure (1.8.3)
     jwt (1.5.1)
     mime-types (2.99.1)
+    mini_memory_store (0.1.0)
     minitest (5.8.4)
+    money (6.7.1)
+      i18n (>= 0.6.4, <= 0.7.0)
+      sixarm_ruby_unaccent (>= 1.1.1, < 2)
     multi_json (1.12.0)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
@@ -108,6 +114,7 @@ GEM
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
+    redis (3.3.1)
     rest-client (1.8.0)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
@@ -116,6 +123,7 @@ GEM
       rack (~> 1.5)
       rack-protection (~> 1.4)
       tilt (>= 1.3, < 3)
+    sixarm_ruby_unaccent (1.1.1)
     sqlite3 (1.3.11)
     stringex (1.5.1)
     thin (1.6.4)
@@ -136,16 +144,23 @@ PLATFORMS
 
 DEPENDENCIES
   bigcommerce
+  cachy
   datamapper
   dm-postgres-adapter
   dm-sqlite-adapter
   do_postgres (>= 0.10.17)
   dotenv
+  jwt
+  money
   omniauth-bigcommerce (~> 0.3.0)
   pg (>= 0.15)
+  redis
   sinatra (~> 1.4.7)
   sqlite3
   thin
 
+RUBY VERSION
+   ruby 2.2.5p319
+
 BUNDLED WITH
-   1.11.2
+   1.13.6
