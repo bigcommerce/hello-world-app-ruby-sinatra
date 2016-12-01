@@ -21,6 +21,8 @@ app on the public Internet.
   * _Uninstall Callback URL_: `https://<app hostname>/uninstall`
 * Enable the _Products - Modify_ scope under _OAuth scopes_. This sample app uses that scope, but if you need others,
 you'll need to specify them here and then modify the `scopes` method in `hello.rb` to match.
+  * Note: If you are managing customer information through the API (such as with the _Recently Purchased Products Block_ example 
+  below) then you will need to also enable the _Customers_ scope to at least read.
 * Click `Save & Close` on the top right of the dialog.
 * You'll now see your app in a list in the _My Apps_ section of Develper Portal. Hover over it and click
 _View Client ID_. You'll need these values in the next step.
