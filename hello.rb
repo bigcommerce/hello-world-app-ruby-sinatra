@@ -63,17 +63,18 @@ class Store
   validates_presence_of :access_token, :store_hash
   validates_uniqueness_of :store_hash
 
-  def bc_api
-    config = {
-      store_hash: self.store_hash,
-      client_id: bc_client_id,
-      access_token: self.access_token
-    }
-    Bigcommerce::Api.new(config)
+  def bc_api_connection
+    Bigcommerce::Connection.build(
+        Bigcommerce::Config.new(
+            store_hash: self.store_hash,
+            client_id: bc_client_id,
+            access_token: self.access_token
+        )
+    )
   end
 
   def bc_api_working?
-    time = bc_api.time
+    time = Bigcommerce::System.time
     time && time.key?("time")
   end
 end
@@ -88,7 +89,7 @@ get '/' do
 
   @bc_api_url = bc_api_url
   @client_id = bc_client_id
-  @products = JSON.pretty_generate(@store.bc_api.products)
+  @products = JSON.pretty_generate(Bigcommerce::Product.all(connection: @store.bc_api_connection))
 
   erb :index
 end
@@ -270,11 +271,11 @@ def recently_purchased_products(store, customer_id, use_cache = true)
   cache_key = :"customers/#{customer_id}/orders/products"
 
   prods = Cachy.cache(cache_key, expires_in: 60*15) do
-    @orders = store.bc_api.orders(customer_id: customer_id)
+    @orders = BigCommerce::Order.all(customer_id: customer_id, connection: @store.bc_api_connection)
     products = []
     @orders.each do |order|
-      store.bc_api.orders_products(order['id']).each do |order_product|
-        products << store.bc_api.product(order_product['product_id'])
+      Bigcommerce::OrderProduct.all(order['id'], connection: @store.bc_api_connection).each do |order_product|
+        products << Bigcommerce::Product(order_product['product_id'], connection: @store.bc_api_connection)
       end
     end
     products
